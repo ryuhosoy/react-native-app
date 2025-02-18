@@ -1,76 +1,88 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Animated } from 'react-native';
+import { StyleSheet, Text, View, TextInput, FlatList, TouchableOpacity, Image } from 'react-native';
+import { Link } from 'expo-router';
 
-const fortunes = [
-  { result: '大吉！', message: '素晴らしい1日になるでしょう！', color: '#FF4D4D' },
-  { result: '中吉', message: '良いことがありそうです。', color: '#4DA6FF' },
-  { result: '小吉', message: '穏やかな1日になりそうです。', color: '#4DFF88' },
-  { result: '末吉', message: '慎重に行動しましょう。', color: '#FFB74D' },
-  { result: '凶', message: '今日は静かに過ごすことをお勧めします。', color: '#9E9E9E' }
+// サンプルデータ（実際のアプリでは、APIから取得することを想定）
+const gyms = [
+  {
+    id: '1',
+    name: 'フィットネスジムA',
+    address: '東京都渋谷区○○1-1-1',
+    rating: 4.5,
+    price: '¥7,000~/月',
+    image: '',
+    features: ['24時間営業', 'マシン充実', 'シャワー完備']
+  },
+  {
+    id: '2',
+    name: 'スポーツジムB',
+    address: '東京都新宿区××2-2-2',
+    rating: 4.2,
+    price: '¥8,500~/月',
+    image: '',
+    features: ['プール完備', 'ヨガレッスン', 'パーソナルトレーニング']
+  },
+  // ... 他のジムデータ
 ];
 
-export default function FortuneScreen() {
-  const [question, setQuestion] = useState('');
-  const [fortune, setFortune] = useState(null);
-  const [isShaking, setIsShaking] = useState(false);
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+export default function GymSearchScreen() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredGyms, setFilteredGyms] = useState(gyms);
 
-  const shakeBall = () => {
-    setIsShaking(true);
-    setTimeout(() => {
-      setIsShaking(false);
-      const randomIndex = Math.floor(Math.random() * fortunes.length);
-      setFortune(fortunes[randomIndex]);
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 1000,
-        useNativeDriver: true,
-      }).start();
-    }, 1500);
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
+    const filtered = gyms.filter(gym => 
+      gym.name.toLowerCase().includes(text.toLowerCase()) ||
+      gym.address.toLowerCase().includes(text.toLowerCase())
+    );
+    setFilteredGyms(filtered);
   };
 
-  const getFortune = () => {
-    if (!question.trim()) {
-      alert('質問を入力してください！');
-      return;
-    }
-    fadeAnim.setValue(0);
-    setFortune(null);
-    shakeBall();
-  };
+  const renderGymItem = ({ item }: { item: typeof gyms[0] }) => (
+    <Link href={`/gym/${item.id}`} asChild>
+      <TouchableOpacity style={styles.gymCard}>
+        <View style={styles.gymImageContainer}>
+          {/* <Image
+            source={{ uri: item.image }}
+            style={styles.gymImage}
+            defaultSource={require('../assets/images/placeholder.png')}
+          /> */}
+        </View>
+        <View style={styles.gymInfo}>
+          <Text style={styles.gymName}>{item.name}</Text>
+          <Text style={styles.gymAddress}>{item.address}</Text>
+          <View style={styles.ratingContainer}>
+            <Text style={styles.rating}>★ {item.rating}</Text>
+            <Text style={styles.price}>{item.price}</Text>
+          </View>
+          <View style={styles.featuresContainer}>
+            {item.features.map((feature, index) => (
+              <View key={index} style={styles.featureTag}>
+                <Text style={styles.featureText}>{feature}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      </TouchableOpacity>
+    </Link>
+  );
 
   return (
     <View style={styles.container}>
-      <View style={styles.ballContainer}>
-        <View style={[styles.ball, isShaking && styles.shake]}>
-          <Text style={styles.ballText}>🔮</Text>
-        </View>
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="ジム名や場所で検索"
+          value={searchQuery}
+          onChangeText={handleSearch}
+        />
       </View>
-
-      <TextInput
-        style={styles.input}
-        value={question}
-        onChangeText={setQuestion}
-        placeholder="運勢を占いたいことを入力してください..."
-        placeholderTextColor="#666"
+      <FlatList
+        data={filteredGyms}
+        renderItem={renderGymItem}
+        keyExtractor={item => item.id}
+        contentContainerStyle={styles.listContainer}
       />
-
-      <TouchableOpacity 
-        style={styles.button} 
-        onPress={getFortune}
-        disabled={isShaking}
-      >
-        <Text style={styles.buttonText}>占う</Text>
-      </TouchableOpacity>
-
-      {fortune && (
-        <Animated.View style={[styles.resultContainer, { opacity: fadeAnim }]}>
-          <Text style={[styles.fortuneResult, { color: fortune.color }]}>
-            {fortune.result}
-          </Text>
-          <Text style={styles.fortuneMessage}>{fortune.message}</Text>
-        </Animated.View>
-      )}
     </View>
   );
 }
@@ -78,65 +90,86 @@ export default function FortuneScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    alignItems: 'center',
     backgroundColor: '#F5F5F5',
   },
-  ballContainer: {
-    marginVertical: 30,
-  },
-  ball: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#6B4DE6',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  ballText: {
-    fontSize: 50,
-  },
-  shake: {
-    transform: [{ rotate: '10deg' }],
-    animationName: 'shake',
-    animationDuration: '0.5s',
-    animationIterationCount: 'infinite',
-  },
-  input: {
-    width: '100%',
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#DDD',
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 20,
+  searchContainer: {
+    padding: 15,
     backgroundColor: '#FFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  searchInput: {
+    height: 40,
+    backgroundColor: '#F0F0F0',
+    borderRadius: 20,
+    paddingHorizontal: 15,
     fontSize: 16,
   },
-  button: {
-    backgroundColor: '#6B4DE6',
+  listContainer: {
     padding: 15,
-    borderRadius: 10,
-    width: '50%',
   },
-  buttonText: {
-    color: '#FFF',
-    textAlign: 'center',
+  gymCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  gymImageContainer: {
+    height: 150,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    overflow: 'hidden',
+  },
+  gymImage: {
+    width: '100%',
+    height: '100%',
+  },
+  gymInfo: {
+    padding: 15,
+  },
+  gymName: {
     fontSize: 18,
     fontWeight: 'bold',
+    marginBottom: 5,
   },
-  resultContainer: {
-    marginTop: 30,
-    alignItems: 'center',
+  gymAddress: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
   },
-  fortuneResult: {
-    fontSize: 36,
+  ratingContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  rating: {
+    color: '#FFB100',
     fontWeight: 'bold',
-    marginBottom: 10,
   },
-  fortuneMessage: {
-    fontSize: 18,
-    color: '#333',
-    textAlign: 'center',
+  price: {
+    color: '#2E7D32',
+    fontWeight: 'bold',
+  },
+  featuresContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  featureTag: {
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  featureText: {
+    fontSize: 12,
+    color: '#1976D2',
   },
 }); 

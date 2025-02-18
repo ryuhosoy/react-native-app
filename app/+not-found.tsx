@@ -1,22 +1,19 @@
 import React from 'react';
 import { Link, Stack } from 'expo-router';
-import { StyleSheet } from 'react-native';
-
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { StyleSheet, Text, View } from 'react-native';
 
 export default function NotFoundScreen() {
   return (
     <>
-      <Stack.Screen options={{ title: 'Oops!' }} />
-      <ThemedView style={styles.container}>
-        <ThemedText type="title">This screen doesn't exist.</ThemedText>
+      <Stack.Screen options={{ title: 'ページが見つかりません' }} />
+      <View style={styles.container}>
+        <Text style={styles.title}>お探しのページは存在しません。</Text>
         <Link href="/" style={styles.link}>
-          <ThemedText type="link">Go to home screen!</ThemedText>
+          <Text style={styles.linkText}>ホーム画面に戻る</Text>
         </Link>
-      </ThemedView>
+      </View>
     </>
-  );
+  );  
 }
 
 const styles = StyleSheet.create({
@@ -26,8 +23,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
   },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
   link: {
     marginTop: 15,
     paddingVertical: 15,
   },
+  linkText: {
+    color: '#1976D2',
+    fontSize: 16,
+  }
 });
